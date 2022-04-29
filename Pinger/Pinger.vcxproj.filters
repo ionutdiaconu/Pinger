@@ -24,9 +24,15 @@
     <ClInclude Include="ipv4_header.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DBManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DBManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

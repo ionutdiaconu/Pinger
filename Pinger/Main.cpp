@@ -12,6 +12,7 @@ using std::string;
 
 #include "icmp_header.hpp"
 #include "ipv4_header.hpp"
+#include "DBManager.h"
 
 using boost::asio::ip::icmp;
 using boost::asio::steady_timer;
@@ -104,13 +105,20 @@ private:
 			// Print out some information about the reply packet.
 			chrono::steady_clock::time_point now = chrono::steady_clock::now();
 			chrono::steady_clock::duration elapsed = now - time_sent_;
+
+			std::string host = ipv4_hdr.source_address().to_string();
+			std::string time = std::to_string(chrono::duration_cast<chrono::milliseconds>(elapsed).count());
+
 			std::cout << length - ipv4_hdr.header_length()
 				<< " bytes from " << ipv4_hdr.source_address()
 				<< ": icmp_seq=" << icmp_hdr.sequence_number()
 				<< ", ttl=" << ipv4_hdr.time_to_live()
 				<< ", time="
-				<< chrono::duration_cast<chrono::milliseconds>(elapsed).count()
+				<< time
 				<< std::endl;
+
+			DBManager dbManager{};
+			dbManager.insert(host,time);
 		}
 
 		start_receive();
@@ -151,6 +159,11 @@ int main(int argc, char* argv[])
 		cout << "Starting Pinger...." << endl;
 
 		const string pingAddress = argv[1];
+
+
+		/*DBManager dbManager{};
+		dbManager.dbtest();*/
+
 
 		cout << "pinging " << pingAddress << endl;
 
