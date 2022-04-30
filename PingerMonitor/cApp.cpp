@@ -1,6 +1,6 @@
 #include "cApp.h"
 
-wxIMPLEMENT_APP(cApp);
+void wxIMPLEMENT_APP(cApp);
 
 
 cApp::cApp()
