@@ -1,11 +1,22 @@
 #pragma once
 
 #include <iostream>
+#include <pqxx/pqxx> 
+
 class DBManager
 {
 
+private:
+
+	pqxx::connection con;
+
 public:
-	void dbtest();
+
+	DBManager();
+	~DBManager();
+
 	void insert(std::string host, std::string time);
+
+
 };
 
