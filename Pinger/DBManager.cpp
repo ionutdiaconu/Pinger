@@ -3,7 +3,6 @@
 #include <iostream>
 #include <pqxx/pqxx> 
 
-#include <ctime>
 
 using std::cout;
 using std::endl;
@@ -15,58 +14,58 @@ using pqxx::work;
 
 
 
-//std::string FormatTime(std::chrono::system_clock::time_point tp) {
-//	std::stringstream ss;
-//	auto t = std::chrono::system_clock::to_time_t(tp);
-//	auto tp2 = std::chrono::system_clock::from_time_t(t);
-//	if (tp2 > tp)
-//		t = std::chrono::system_clock::to_time_t(tp - std::chrono::seconds(1));
-//	ss << std::put_time(std::localtime_s(&t), "%Y-%m-%d %T")
-//		<< "." << std::setfill('0') << std::setw(3)
-//		<< (std::chrono::duration_cast<std::chrono::milliseconds>(
-//			tp.time_since_epoch()).count() % 1000);
-//	return ss.str();
-//}
+std::string getCurrentTime() {
 
-std::string CurrentTimeStr() {
-	//return FormatTime(std::chrono::system_clock::now());
+	auto now = std::chrono::system_clock::now();
+	std::time_t time = std::chrono::system_clock::to_time_t(now);
 
-	time_t now = time(0);
-
-	return std::to_string(now);
+	char s[50];
+	errno_t e = ctime_s(s, 50, &time);
+	if (e)
+	{
+		throw std::runtime_error("Error converting time");
+	}
+	
+	return s;
 }
+
+
+
+DBManager::DBManager() : 
+	con("dbname = pinger user = pinger password = pinger hostaddr = 192.168.1.80 port = 5432")
+{
+	if (con.is_open()) 
+	{
+			cout << "Opened database successfully: " << con.dbname() << endl;
+	}
+	else 
+	{	
+		throw std::runtime_error("Can't open database");
+	}
+}
+
+DBManager::~DBManager()
+{
+	con.close();
+}
+
 
 void DBManager::insert(string host, string cost)
 {
 	string sql;
 
 	try {
-		connection C("dbname = pinger user = pinger password = pinger \
-      hostaddr = 192.168.1.80 port = 5432");
-		if (C.is_open()) {
-			cout << "Opened database successfully: " << C.dbname() << endl;
-		}
-		else {
-			cout << "Can't open database" << endl;
-			//return 1;
-		}
+		
+		sql = "INSERT INTO ping_events (host, datetime, cost) VALUES ('" + host + "', '" + getCurrentTime() + "', '" + cost + "');";
 
-		/* Create SQL statement */
-		sql = "INSERT INTO ping_events (host, datetime, cost) VALUES ('" + host + "', '" + CurrentTimeStr() + "', '" + cost + "');";
+		work work(con);
 
-		/* Create a transactional object. */
-		work W(C);
-
-
-		/* Execute SQL query */
-		W.exec(sql);
-		W.commit();
-		cout << "Records created successfully" << endl;
-		C.close();
+		work.exec(sql);
+		work.commit();
 	}
 	catch (const std::exception& e) {
 		cerr << e.what() << std::endl;
-		//return 1;
 	}
-
 }
+
+

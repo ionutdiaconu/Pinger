@@ -20,11 +20,17 @@ namespace chrono = boost::asio::chrono;
 
 class pinger
 {
+
+private:
+	DBManager dbManager{};
+	std::string pingAddress;
+
 public:
 	pinger(boost::asio::io_context& io_context, const char* destination)
 		: resolver_(io_context), socket_(io_context, icmp::v4()),
 		timer_(io_context), sequence_number_(0), num_replies_(0)
 	{
+		pingAddress = destination;
 		destination_ = *resolver_.resolve(icmp::v4(), destination, "").begin();
 
 		start_send();
@@ -34,7 +40,7 @@ public:
 private:
 	void start_send()
 	{
-		std::string body("\"Hello!\" from Asio ping.");
+		std::string body("\"hearthbeat monitor.");
 
 		// Create an ICMP header for an echo request.
 		icmp_header echo_request;
@@ -106,7 +112,6 @@ private:
 			chrono::steady_clock::time_point now = chrono::steady_clock::now();
 			chrono::steady_clock::duration elapsed = now - time_sent_;
 
-			std::string host = ipv4_hdr.source_address().to_string();
 			std::string time = std::to_string(chrono::duration_cast<chrono::milliseconds>(elapsed).count());
 
 			std::cout << length - ipv4_hdr.header_length()
@@ -117,8 +122,8 @@ private:
 				<< time
 				<< std::endl;
 
-			DBManager dbManager{};
-			dbManager.insert(host,time);
+			
+			dbManager.insert(pingAddress,time);
 		}
 
 		start_receive();
@@ -156,15 +161,7 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		cout << "Starting Pinger...." << endl;
-
 		const string pingAddress = argv[1];
-
-
-		/*DBManager dbManager{};
-		dbManager.dbtest();*/
-
-
 		cout << "pinging " << pingAddress << endl;
 
 		boost::asio::io_context io_context;
