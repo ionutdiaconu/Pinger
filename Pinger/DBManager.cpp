@@ -18,15 +18,17 @@ std::string getCurrentTime() {
 
 	auto now = std::chrono::system_clock::now();
 	std::time_t time = std::chrono::system_clock::to_time_t(now);
-
+	
 	char s[50];
 
-	if (ctime_s(s, 50, &time))
+	/*if (ctime_s(s, 50, &time))
 	{
 		throw std::runtime_error("Error converting time");
-	}
+	}*/
 	
-	return s;
+	//return s;
+
+	return std::to_string(time);
 }
 
 
@@ -56,7 +58,7 @@ void DBManager::insert(string host, string cost)
 
 	try {
 		
-		sql = "INSERT INTO ping_events (host, datetime, cost) VALUES ('" + host + "', '" + getCurrentTime() + "', '" + cost + "');";
+		sql = "INSERT INTO ping_events (host, datetime, cost) VALUES ('" + host + "', to_timestamp('" + getCurrentTime() + "'), '" + cost + "');";
 
 		work work(con);
 
