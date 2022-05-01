@@ -15,19 +15,8 @@ using pqxx::work;
 
 
 std::string getCurrentTime() {
-
 	auto now = std::chrono::system_clock::now();
 	std::time_t time = std::chrono::system_clock::to_time_t(now);
-	
-	char s[50];
-
-	/*if (ctime_s(s, 50, &time))
-	{
-		throw std::runtime_error("Error converting time");
-	}*/
-	
-	//return s;
-
 	return std::to_string(time);
 }
 
