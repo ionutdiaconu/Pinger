@@ -11,6 +11,7 @@ public:
 	~cMain();
 
 	wxButton* cmdGetPing;
+	wxTextCtrl* txtPingEvents;
 
 	void OnExit(wxCommandEvent& event);
 	void OnGetPing(wxCommandEvent& event);
@@ -22,6 +23,7 @@ public:
 
 enum
 {
-	BUTTON_GetPing = wxID_HIGHEST + 1 // declares an id which will be used to call our button
+	BUTTON_GetPing = wxID_HIGHEST + 1, // declares an id which will be used to call our button
+	TEXT_PingEvents,
 };
 

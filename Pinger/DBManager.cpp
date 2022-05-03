@@ -60,3 +60,35 @@ void DBManager::insert(string host, string cost)
 }
 
 
+std::vector<std::string> DBManager::getPingDates()
+{
+	string sql;
+	std::vector<string> response;
+
+	try {
+
+		sql = "select distinct DATE(\"datetime\") from ping_events ;";
+
+		work work(con);
+
+		pqxx::result r = work.exec(sql);
+		for (auto const& row : r)
+		{
+			for (auto const& field : row)
+			{
+				std::cout << field.c_str() << '\t';
+				response.push_back(field.c_str());
+			}
+			std::cout << std::endl;
+		}
+
+		
+	}
+	catch (const std::exception& e) {
+		cerr << e.what() << std::endl;
+	}
+
+	return response;
+}
+
+
