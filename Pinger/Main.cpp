@@ -268,7 +268,13 @@ private:
 			{
 				if (!ec)
 				{
+					cout << "[Server] New connection: " << socket.remote_endpoint() << "\n";
+
 					std::make_shared<Session>(std::move(socket))->start();
+				}
+				else
+				{
+					cout << "[Server] New connection error: " << ec.message() << "\n";
 				}
 
 				do_accept();
@@ -320,6 +326,21 @@ void startServer()
 }
 
 
+
+std::thread serverThread;
+std::thread pingerThread;
+
+
+void stop()
+{
+
+}
+
+//void waitForClientConnection(const io_context& context )
+//{
+//	
+//}
+
 int main(int argc, char* argv[])
 {
 	try
@@ -333,20 +354,21 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		io_service ioservice1;
-		io_service ioservice2;
+		io_context serverIOContext;
+		io_context pingerIOContext;
 
-		steady_timer timer1{ ioservice1, std::chrono::seconds{3} };
+		steady_timer timer1{ serverIOContext, std::chrono::seconds{3} };
 		timer1.async_wait([](const error_code& ec)
 			{
 				if (ec)
 				{
 					std::cerr << "error_code: " << ec.what() << std::endl;
 				}
+
 				startServer();
 			});
 
-		steady_timer timer2{ ioservice2, std::chrono::seconds{3} };
+		steady_timer timer2{ pingerIOContext, std::chrono::seconds{3} };
 		timer2.async_wait([=](const error_code& ec)
 			{
 				if (ec)
@@ -357,10 +379,12 @@ int main(int argc, char* argv[])
 				startPinger(argv[1]);
 			});
 
-		std::thread thread1{ [&ioservice1]() { ioservice1.run(); } };
-		std::thread thread2{ [&ioservice2]() { ioservice2.run(); } };
-		thread1.join();
-		thread2.join();
+		
+		serverThread = std::thread([&serverIOContext]() { serverIOContext.run(); });
+		pingerThread = std::thread([&pingerIOContext]() { pingerIOContext.run(); });
+		serverThread.join();
+
+		cout << "Server started! \n";
 	}
 	catch (std::exception& e)
 	{
