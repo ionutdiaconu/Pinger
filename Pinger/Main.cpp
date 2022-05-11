@@ -51,14 +51,14 @@ private:
 
 public:
 	Pinger(io_context& io_context, const char* destination) :
-		resolver_(io_context),
-		socket_(io_context, icmp::v4()),
-		timer_(io_context),
-		sequence_number_(0),
-		num_replies_(0)
+		icmp_resolver(io_context),
+		socket(io_context, icmp::v4()),
+		timer(io_context),
+		sequence_number(0),
+		num_replies(0)
 	{
 		pingAddress = destination;
-		destination_ = *resolver_.resolve(icmp::v4(), destination, "").begin();
+		endpoint_destination = *icmp_resolver.resolve(icmp::v4(), destination, "").begin();
 
 		start_send();
 		start_receive();
@@ -74,7 +74,7 @@ private:
 		echo_request.type(icmp_header::echo_request);
 		echo_request.code(0);
 		echo_request.identifier(get_identifier());
-		echo_request.sequence_number(++sequence_number_);
+		echo_request.sequence_number(++sequence_number);
 		compute_checksum(echo_request, body.begin(), body.end());
 
 		// Encode the request packet.
@@ -83,34 +83,34 @@ private:
 		os << echo_request << body;
 
 		// Send the request.
-		time_sent_ = steady_timer::clock_type::now();
-		socket_.send_to(request_buffer.data(), destination_);
+		time_sent = steady_timer::clock_type::now();
+		socket.send_to(request_buffer.data(), endpoint_destination);
 
-		// Wait up to five seconds for a reply.
-		num_replies_ = 0;
-		timer_.expires_at(time_sent_ + boost_chrono::seconds(5));
-		timer_.async_wait(boost::bind(&Pinger::handle_timeout, this));
+		// Wait up to 24 hours for a reply.
+		num_replies = 0;
+		timer.expires_at(time_sent + boost_chrono::hours(24));
+		timer.async_wait(boost::bind(&Pinger::handle_timeout, this));
 	}
 
 	void handle_timeout()
 	{
-		if (num_replies_ == 0)
+		if (num_replies == 0)
 		{
 			std::cout << "Request timed out" << std::endl;
 		}
 
 		// Requests must be sent no less than one second apart.
-		timer_.expires_at(time_sent_ + boost_chrono::seconds(1));
-		timer_.async_wait(boost::bind(&Pinger::start_send, this));
+		timer.expires_at(time_sent + boost_chrono::seconds(1));
+		timer.async_wait(boost::bind(&Pinger::start_send, this));
 	}
 
 	void start_receive()
 	{
 		// Discard any data already in the buffer.
-		reply_buffer_.consume(reply_buffer_.size());
+		reply_buffer.consume(reply_buffer.size());
 
 		// Wait for a reply. We prepare the buffer to receive up to 64KB.
-		socket_.async_receive(reply_buffer_.prepare(65536),
+		socket.async_receive(reply_buffer.prepare(65536),
 			boost::bind(&Pinger::handle_receive, this, boost::placeholders::_2));
 	}
 
@@ -118,10 +118,10 @@ private:
 	{
 		// The actual number of bytes received is committed to the buffer so that we
 		// can extract it using a std::istream object.
-		reply_buffer_.commit(length);
+		reply_buffer.commit(length);
 
 		// Decode the reply packet.
-		std::istream is(&reply_buffer_);
+		std::istream is(&reply_buffer);
 		ipv4_header ipv4_hdr;
 		icmp_header icmp_hdr;
 		is >> ipv4_hdr >> icmp_hdr;
@@ -131,15 +131,15 @@ private:
 		// expected sequence number.
 		if (is && icmp_hdr.type() == icmp_header::echo_reply
 			&& icmp_hdr.identifier() == get_identifier()
-			&& icmp_hdr.sequence_number() == sequence_number_)
+			&& icmp_hdr.sequence_number() == sequence_number)
 		{
 			// If this is the first reply, interrupt the five second timeout.
-			if (num_replies_++ == 0)
-				timer_.cancel();
+			if (num_replies++ == 0)
+				timer.cancel();
 
 			// Print out some information about the reply packet.
 			boost_chrono::steady_clock::time_point now = boost_chrono::steady_clock::now();
-			boost_chrono::steady_clock::duration elapsed = now - time_sent_;
+			boost_chrono::steady_clock::duration elapsed = now - time_sent;
 
 			std::string time = std::to_string(boost_chrono::duration_cast<boost_chrono::milliseconds>(elapsed).count());
 
@@ -168,24 +168,21 @@ private:
 #endif
 	}
 
-	icmp::resolver resolver_;
-	icmp::endpoint destination_;
-	icmp::socket socket_;
-	steady_timer timer_;
-	unsigned short sequence_number_;
-	boost_chrono::steady_clock::time_point time_sent_;
-	boost::asio::streambuf reply_buffer_;
-	std::size_t num_replies_;
+	icmp::resolver icmp_resolver;
+	icmp::endpoint endpoint_destination;
+	icmp::socket socket;
+	steady_timer timer;
+	unsigned short sequence_number;
+	boost_chrono::steady_clock::time_point time_sent;
+	boost::asio::streambuf reply_buffer;
+	std::size_t num_replies;
 };
-
-
-
 
 
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-	Session(tcp::socket socket) : socket_(std::move(socket))
+	Session(tcp::socket socket) : socket(std::move(socket))
 	{
 	}
 
@@ -204,7 +201,7 @@ private:
 		as long as the lambda is alive (the async. operation is in progress), 
 		the connection instance is alive as well.*/
 		auto self(shared_from_this());
-		socket_.async_read_some(boost::asio::buffer(data_, max_length),
+		socket.async_read_some(boost::asio::buffer(data, max_length),
 			[this, self](std::error_code ec, std::size_t length)
 			{
 				if (!ec)
@@ -235,7 +232,7 @@ private:
 		
 		cout << "sending client response: " << dataToSend << " len:" << dataToSendSize << endl;
 
-		async_write(socket_, boost::asio::buffer(dataToSend, dataToSendSize),
+		async_write(socket, boost::asio::buffer(dataToSend, dataToSendSize),
 			[this, self](std::error_code ec, std::size_t /*length*/)
 			{
 				if (!ec)
@@ -245,15 +242,15 @@ private:
 			});
 	}
 
-	tcp::socket socket_;
+	tcp::socket socket;
 	enum { max_length = 1024 };
-	char data_[max_length];
+	char data[max_length];
 };
 
 class Server
 {
 public:
-	Server(io_context& io_context, short port) : acceptor_(io_context, tcp::endpoint(tcp::v4(), port))
+	Server(io_context& io_context, short port) : acceptor(io_context, tcp::endpoint(tcp::v4(), port))
 	{
 		do_accept();
 	}
@@ -263,7 +260,7 @@ private:
 	{
 		cout << "Server::do_accept" << endl;
 
-		acceptor_.async_accept(
+		acceptor.async_accept(
 			[this](std::error_code ec, tcp::socket socket)
 			{
 				if (!ec)
@@ -281,19 +278,9 @@ private:
 			});
 	}
 
-	tcp::acceptor acceptor_;
+	tcp::acceptor acceptor;
 };
 
-
-//void SendHandler(error_code ex) 
-//{
-//
-//	if (ex)
-//	{
-//		std::cerr << "error_code: " << ex.what() << "\n";
-//	}
-//	std::cout << " SendHandler" << std::endl;
-//}
 
 void startPinger(const char* address)
 {
@@ -336,10 +323,6 @@ void stop()
 
 }
 
-//void waitForClientConnection(const io_context& context )
-//{
-//	
-//}
 
 int main(int argc, char* argv[])
 {

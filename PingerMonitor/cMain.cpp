@@ -97,7 +97,7 @@ void cMain::OnGetPing(wxCommandEvent& event)
 
         char reply[max_length];
         //TODO:implement readfully
-        size_t reply_length = boost::asio::read(s,boost::asio::buffer(reply, 48));
+        size_t reply_length = s.read_some(boost::asio::buffer(reply));
 
 
         std::stringstream b;
