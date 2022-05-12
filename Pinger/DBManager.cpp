@@ -1,8 +1,7 @@
-#include "DBManager.h"
+#include "DBManager.hpp"
 
 #include <iostream>
 #include <pqxx/pqxx> 
-
 
 using std::cout;
 using std::endl;
@@ -13,13 +12,11 @@ using pqxx::connection;
 using pqxx::work;
 
 
-
 std::string getCurrentTime() {
 	auto now = std::chrono::system_clock::now();
 	std::time_t time = std::chrono::system_clock::to_time_t(now);
 	return std::to_string(time);
 }
-
 
 
 DBManager::DBManager() : 

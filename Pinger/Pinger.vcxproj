@@ -163,14 +163,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="DBManager.h" />
+    <ClInclude Include="DBManager.hpp" />
     <ClInclude Include="icmp_header.hpp" />
     <ClInclude Include="ipv4_header.hpp" />
-    <ClInclude Include="Main.h" />
+    <ClInclude Include="Pinger.hpp" />
+    <ClInclude Include="Server.hpp" />
+    <ClInclude Include="Session.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DBManager.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Pinger.cpp" />
+    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

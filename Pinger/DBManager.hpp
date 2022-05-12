@@ -7,7 +7,6 @@ class DBManager
 {
 
 private:
-
 	pqxx::connection con;
 
 public:
@@ -17,7 +16,6 @@ public:
 
 	void insert(std::string host, std::string time);
 	std::vector<std::string> getPingDates();
-
 
 };
 
