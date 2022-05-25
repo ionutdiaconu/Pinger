@@ -113,8 +113,8 @@ Pinger::Pinger(io_context& io_context, const char* destination) :
 				<< time
 				<< std::endl;
 
-			//TODO: uncomment
-			//dbManager.insert(pingAddress,time);
+			
+			dbManager.insert(pingAddress,time);
 		}
 
 		start_receive();

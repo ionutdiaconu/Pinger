@@ -6,6 +6,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include "icmp_header.hpp"
 #include "ipv4_header.hpp"
+#include "DBManager.hpp"
 
 using std::string;
 using boost::asio::ip::icmp;
@@ -28,6 +29,7 @@ private:
 	boost_chrono::steady_clock::time_point time_sent;
 	boost::asio::streambuf reply_buffer;
 	std::size_t num_replies;
+	DBManager dbManager{};
 
 public:
 	Pinger(io_context& io_context, const char* destination);
