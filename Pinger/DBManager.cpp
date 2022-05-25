@@ -18,7 +18,7 @@ std::string getCurrentTime() {
 	return std::to_string(time);
 }
 
-
+//TODO: externalize connection string to properties file
 DBManager::DBManager() : 
 	con("dbname = pinger user = pinger password = pinger hostaddr = 192.168.1.80 port = 5432")
 {

@@ -26,6 +26,10 @@ END_EVENT_TABLE() // The button is pressed
 
 cMain::cMain(): wxFrame(nullptr, wxID_ANY,"Ping Monitor")
 {
+
+    txtPingServer = new wxTextCtrl(this, TEXT_PingServer, "192.168.1.80:4444", wxDefaultPosition, wxDefaultSize,
+        wxTE_NO_VSCROLL, wxDefaultValidator, wxTextCtrlNameStr);
+
     txtPingEvents = new wxTextCtrl(this, TEXT_PingEvents, "", wxDefaultPosition, wxDefaultSize,
         wxTE_MULTILINE | wxTE_RICH, wxDefaultValidator, wxTextCtrlNameStr);
 
@@ -33,7 +37,14 @@ cMain::cMain(): wxFrame(nullptr, wxID_ANY,"Ping Monitor")
     
 
     wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
-    // create text ctrl with minimal size 100x60
+   
+
+    topsizer->Add(txtPingServer,
+        0,            // make vertically unstretchable
+        wxEXPAND |    // make horizontally stretchable
+        wxALL,        //   and make border all around
+        10);         // set border width to 10
+
     topsizer->Add(txtPingEvents,
         1,            // make vertically stretchable
         wxEXPAND |    // make horizontally stretchable
@@ -64,7 +75,7 @@ cMain::cMain(): wxFrame(nullptr, wxID_ANY,"Ping Monitor")
     SetStatusText(wxT("test"), 1);
 
     Layout();
-    Maximize();
+    //Maximize();
 }
 
 cMain::~cMain()
@@ -83,12 +94,20 @@ void cMain::OnGetPing(wxCommandEvent& event)
 {
     try
     {
+        std::string pingServer = txtPingServer->GetValue().ToStdString();
+
+        std::string::size_type pos = pingServer.find(":");
+        std::string port  = pingServer.substr(pos + 1); 
+        std::string host = pingServer.substr(0, pos);
+      
         boost::asio::io_context io_context;
 
         tcp::socket s(io_context);
         tcp::resolver resolver(io_context);
-        boost::asio::connect(s, resolver.resolve("127.0.0.1", "4444"));
-
+        
+        SetStatusText(wxT("connecting to:" + host + ":" + port ), 1);
+        boost::asio::connect(s, resolver.resolve(host, port));
+        SetStatusText(wxT("connected @" + host + ":" + port), 1);
         
         char request[max_length] = "client msg";
       
@@ -111,5 +130,8 @@ void cMain::OnGetPing(wxCommandEvent& event)
     catch (std::exception& e)
     {
         std::cerr << "Exception: " << e.what() << "\n";
+        std::stringstream ss{};
+        ss << e.what();
+        SetStatusText(wxT("Error:" + ss.str()), 1);
     }
 }
